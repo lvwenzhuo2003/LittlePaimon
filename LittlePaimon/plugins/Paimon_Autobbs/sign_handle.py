@@ -124,18 +124,23 @@ async def geetest_verify(user_id: str, uid: str, sign_data: dict):
     captcha_enable = global_config.captcha_enabled
     superuser = global_config.superusers
     if not captcha_enable:
-        logger.info('米游社原神签到➤', '未开启验证码绕过，请添加captcha_api_endpoint与captcha_api_key')
+        logger.info('米游社原神签到➤',
+                    '未开启验证码绕过，请添加captcha_api_key并根据需求修改geetest_verify(), sign_action_after_geetest(), '
+                    'geetest_handle_init(), 以及geetest_handle_finish()函数')
         if user_id not in superuser:
             return SignResult.FAIL, f'{uid}签到失败，请联系管理员开启验证码绕过'
         else:
-            return SignResult.FAIL, f'{uid}签到失败，请添加captcha_api_endpoint与captcha_api_key开启验证码绕过'
+            return SignResult.FAIL, f'{uid}签到失败，请添加captcha_api_key并根据需求修改位于[ProgramRoot]/LittlePaimon/plugins' \
+                                    f'/Paimon_Autobbs/sign_handle.py中的geetest_verify(), sign_action_after_geetest(' \
+                                    f'), geetest_handle_init(), 以及geetest_handle_finish()函数'
     api_key = global_config.captcha_api_key
     gt = sign_data['data']['gt']
     challenge = sign_data['data']['challenge']
-    page_url = f'https://webstatic.mihoyo.com/bbs/event/signin-ys/index.html?bbs_auth_required=true&act_id=e202009291139501&ltuid={uid}'
+    page_url = f'https://webstatic.mihoyo.com/bbs/event/signin-ys/index.html?bbs_auth_required=true&act_id' \
+               f'=e202009291139501&ltuid={uid}'
     token, err_string = await geetest_handle_init(api_key=api_key, gt=gt, challenge=challenge,
                                                   page_url=page_url)
-    if err_string is "":
+    if err_string == "":
         sign_result = await sign_action_after_geetest(user_id=user_id,
                                                       uid=uid,
                                                       geetest_challenge=token['challenge'],
@@ -171,6 +176,7 @@ async def geetest_handle_finish(token, err_string):
         return err_string
     else:
         return token
+
 
 @scheduler.scheduled_job('cron', hour=config.auto_sign_hour, minute=config.auto_sign_minute,
                          misfire_grace_time=10)
