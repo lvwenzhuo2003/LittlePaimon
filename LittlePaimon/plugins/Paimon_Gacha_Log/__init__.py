@@ -149,7 +149,7 @@ async def _(event: MessageEvent, player=CommandPlayer(1)):
 @import_log.handle()
 async def _(event: Union[GroupMessageEvent, PrivateMessageEvent]):
     create_import_command(event.user_id)
-    await import_log.finish("请在5分钟内，上传或发送符合UIGF标准的抽卡记录json文件", at_sender=True)
+    await import_log.finish("请在5分钟内，上传或发送符合UIGF v2.2标准的抽卡记录json文件。UIGF格式标准详见：https://uigf.org/standards/UIGF.html", at_sender=True)
 
 
 @export_log.handle()
@@ -158,6 +158,7 @@ async def _(
     bot: Bot,
     player=CommandPlayer(1),
 ):
+    await export_log.send("正在准备符合UIGF v2.2标准的抽卡文件，请等待。UIGF格式标准详见：https://uigf.org/standards/UIGF.html")
     state, msg, path = gacha_log_to_UIGF(player[0].user_id, player[0].uid)
     if not (state and path):
         await export_log.finish(msg, at_sender=True)

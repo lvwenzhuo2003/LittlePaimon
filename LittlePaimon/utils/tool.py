@@ -87,7 +87,7 @@ def cache(ttl=datetime.timedelta(hours=1)):
 
 
 async def check_resource():
-    logger.info('资源检查', '开始检查资源')
+    logger.info('资源检查', '开始检查资源，请勿关闭机器人')
     if not (
             (RESOURCE_BASE_PATH / 'LittlePaimon').is_dir() and
             len(list((RESOURCE_BASE_PATH / 'LittlePaimon').rglob('*'))) >= 50):
@@ -142,3 +142,18 @@ async def check_resource():
             except Exception:
                 logger.warning('资源检查', f'下载<m>{resource["path"]}</m>时<r>出错</r>，请尝试更换<m>github资源地址</m>')
         logger.info('资源检查', '<g>资源下载完成</g>' if flag else '<g>资源完好，无需下载</g>')
+        # This part is to update and check gacha resources from uigf.org.
+        # This should be checked every day. However, we first implement them as check on start.
+        # TODO: Reimplement check resources from UIGF.org every day instead of check on start
+        file_path = RESOURCE_BASE_PATH / "LittlePaimon" / "gacha_res" / "uigf_dict.json"
+        uigf_dict_md5_url = f'https://api.uigf.org/dict/genshin/md5.json'
+        uigf_dict_md5_list = await aiorequests.get(url=uigf_dict_md5_url)
+        uigf_dict_md5 = uigf_dict_md5_list.json()["all"]
+        if not (file_path.exists() and hashlib.md5(file_path.read_bytes()).hexdigest() == uigf_dict_md5):
+            try:
+                await aiorequests.download(url='https://api.uigf.org/dict/genshin/all.json',
+                                           save_path=file_path,
+                                           exclude_json="all.json".split('.')[-1] != 'json')
+            except Exception:
+                print(Exception.with_traceback())
+                logger.warning("资源检查", f"下载<m>uigf_dict.json</m>时<r>出错</r>，请检查<m>互联网连接</m>")

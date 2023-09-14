@@ -5,7 +5,6 @@ from ssl import SSLCertVerificationError
 from typing import Dict, Optional, Any, Union, Tuple
 
 import httpx
-import tqdm.asyncio
 from PIL import Image
 from nonebot import logger
 
@@ -149,18 +148,8 @@ class aiorequests:
         """
         save_path.parent.mkdir(parents=True, exist_ok=True)
         async with httpx.AsyncClient().stream(method='GET', url=url, follow_redirects=True) as datas:
-            if exclude_json and 'application/json' in str(datas.headers['Content-Type']):
-                raise Exception('file not match type')
-            size = int(datas.headers['Content-Length'])
             f = save_path.open('wb')
-            async for chunk in tqdm.asyncio.tqdm(iterable=datas.aiter_bytes(1),
-                                                 desc=url.split('/')[-1],
-                                                 unit='iB',
-                                                 unit_scale=True,
-                                                 unit_divisor=1024,
-                                                 total=size,
-                                                 colour='green'):
-                f.write(chunk)
+            f.write(await datas.aread())
             f.close()
 
     @staticmethod
